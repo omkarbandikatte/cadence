@@ -1,12 +1,19 @@
-"""Shared fixtures. Every test runs against the real Postgres from docker-compose
-(no sqlite substitution — the ledger trigger is a Postgres feature)."""
+"""Shared fixtures. Tests run against a dedicated Postgres database
+(TEST_DATABASE_URL), separate from the dev corpus DB — no sqlite substitution,
+since the ledger append-only trigger is a Postgres feature."""
 from __future__ import annotations
 
-import pytest
-from sqlalchemy import text
-from sqlalchemy.orm import Session
+import os
 
-from cadence.db import SessionLocal, engine
+import pytest
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import Session, sessionmaker
+
+TEST_DATABASE_URL = os.environ.get(
+    "TEST_DATABASE_URL", "postgresql+psycopg://cadence:cadence@localhost:5432/cadence_test"
+)
+engine = create_engine(TEST_DATABASE_URL, future=True)
+SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, future=True)
 
 
 @pytest.fixture(scope="session", autouse=True)

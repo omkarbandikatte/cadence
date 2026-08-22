@@ -19,16 +19,16 @@ down:
 
 migrate:
 	$(ENV) $(ALEMBIC) upgrade head
+	$(ENV) bash -c 'DATABASE_URL="$$TEST_DATABASE_URL" $(ALEMBIC) upgrade head'
 
 test:
 	$(ENV) $(PYTEST) -v
 
 corpus:
-	@echo "M1 not yet built — see docs/07-SYNTHETIC-DATA.md" && exit 1
-	# $(PY) -m cadence.sim.generator --seed $(SEED)
+	$(ENV) $(PY) -m cadence.sim.generator --seed $(SEED)
 
 validate-corpus:
-	@echo "M1 not yet built — see docs/07-SYNTHETIC-DATA.md" && exit 1
+	$(ENV) $(PY) -m cadence.sim.validate --seed $(SEED)
 
 eval:
 	@echo "M6 not yet built — see docs/10-EVALUATION.md" && exit 1
