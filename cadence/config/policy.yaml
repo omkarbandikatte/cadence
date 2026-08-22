@@ -1,0 +1,141 @@
+# config/policy.yaml — see docs/05-DECISION-ENGINE.md (Part B) and
+# docs/06-COMPLIANCE-GATE.md for the constants block. Every constant carries a
+# `source`; several are UNVERIFIED until checked against current NPCI/RBI/TRAI
+# circulars — see the VERIFY block in docs/06-COMPLIANCE-GATE.md. Never
+# hardcode these values in code.
+
+policy_version: 3
+
+constants:
+  max_presentations_per_cycle:
+    value: 3
+    source: UNVERIFIED
+  min_cooling_off_days:
+    value: 2
+    source: PRODUCT_CHOICE
+  pre_debit_notice_hours:
+    value: 24
+    source: UNVERIFIED
+  reserve_days_before_cycle_end:
+    value: 1
+    source: PRODUCT_CHOICE
+  max_contacts_per_week:
+    value: 3
+    source: PRODUCT_CHOICE
+  max_contacts_per_cycle:
+    value: 4
+    source: PRODUCT_CHOICE
+  quiet_hours_ist:
+    start: "21:00"
+    end: "09:00"
+    source: UNVERIFIED
+  max_consecutive_failed_cycles:
+    value: 2
+    source: PRODUCT_CHOICE
+  payment_link_expiry_days:
+    value: 5
+    source: PRODUCT_CHOICE
+  afa_exemption_ceiling_paise:
+    value: 1500000
+    source: UNVERIFIED
+
+# Funding-window model weights (docs/05 Part A). Placeholders until M4's grid
+# search on the train split freezes them.
+model_weights:
+  w_cust: 1.0
+  w_pop: 1.0
+  w_gap: 1.0
+  w_iss: 1.0
+  w_pen: 1.0
+  min_history_successes: 3
+  circular_gaussian_sigma_days: 1.5
+
+# population_term(D) — fixed day-of-month prior, index 0 = day 1 ... index 30 = day 31.
+# Placeholder shape: mass concentrated at month start with a secondary bump at
+# month end. Tuned during M4.
+population_dom_prior:
+  [0.055, 0.075, 0.080, 0.072, 0.060, 0.045, 0.035, 0.030, 0.028, 0.026,
+   0.024, 0.022, 0.020, 0.020, 0.020, 0.020, 0.020, 0.020, 0.022, 0.024,
+   0.026, 0.028, 0.030, 0.032, 0.034, 0.036, 0.040, 0.045, 0.050, 0.055, 0.060]
+
+# Decision table (docs/05 Part B). Consumed by core/policy in M5.
+rules:
+  - id: BAL_A1
+    when: {cause: BALANCE_SHORTFALL, attempt_no: 1, feasible_window: true}
+    candidates:
+      - {action: PRE_DEBIT_NOTICE, offset_days_before_presentment: 2,
+         channel: WHATSAPP, template: predebit_notice_v1}
+      - {action: SCHEDULE_PRESENTMENT, at: prediction.best_day_offset}
+
+  - id: BAL_A2
+    when: {cause: BALANCE_SHORTFALL, attempt_no: 2, feasible_window: true}
+    candidates:
+      - {action: TOPUP_NUDGE, offset_days_before_presentment: 1,
+         channel: WHATSAPP, template: topup_nudge_v1}
+      - {action: SCHEDULE_PRESENTMENT, at: prediction.second_best_day_offset}
+
+  - id: BAL_A3_EXHAUSTED
+    when: {cause: BALANCE_SHORTFALL, presentations_exhausted: true}
+    candidates:
+      - {action: SEND_PAYMENT_LINK, channel: WHATSAPP,
+         template: payment_link_v1, expiry_days: 5}
+      - {action: STOP_MARK_CHURN, after_days: 6}
+
+  - id: BAL_NO_WINDOW
+    when: {cause: BALANCE_SHORTFALL, feasible_window: false}
+    candidates:
+      - {action: SEND_PAYMENT_LINK, channel: WHATSAPP, template: payment_link_v1}
+
+  - id: ISS_A1
+    when: {cause: ISSUER_DEGRADED}
+    candidates:
+      - {action: WAIT_ISSUER_RECOVERY, max_wait_days: 3}
+      - {action: SCHEDULE_PRESENTMENT, at: prediction.best_day_offset}
+
+  - id: ISS_A2_PERSISTENT
+    when: {cause: ISSUER_DEGRADED, waited_days_gte: 3}
+    candidates:
+      - {action: SEND_PAYMENT_LINK, channel: WHATSAPP, template: payment_link_v1}
+
+  - id: TEC_A1
+    when: {cause: TECHNICAL_TRANSIENT, attempt_no_lte: 2}
+    candidates:
+      - {action: PRESENT_NOW, after_minutes: 90}
+
+  - id: MND_REV
+    when: {cause: MANDATE_DEFECT, subtype: REVOKED}
+    candidates:
+      - {action: REQUEST_REAUTH, channel: WHATSAPP, template: reauth_v1}
+      - {action: ESCALATE_TO_MERCHANT}
+    forbid: [PRESENT_NOW, SCHEDULE_PRESENTMENT]
+
+  - id: MND_CAP
+    when: {cause: MANDATE_DEFECT, subtype: AMOUNT_EXCEEDS_CAP}
+    candidates:
+      - {action: ESCALATE_TO_MERCHANT, note: "mandate cap below charge amount; requires new mandate at a higher cap or a reduced charge"}
+      - {action: SEND_PAYMENT_LINK, channel: WHATSAPP, template: payment_link_v1}
+    forbid: [PRESENT_NOW, SCHEDULE_PRESENTMENT]
+
+  - id: INS_UPD
+    when: {cause: INSTRUMENT_DEFECT, subtype_in: [CARD_EXPIRED, ACCOUNT_DORMANT]}
+    candidates:
+      - {action: REQUEST_INSTRUMENT_UPDATE, channel: WHATSAPP, template: instrument_update_v1}
+      - {action: SEND_PAYMENT_LINK, channel: WHATSAPP, template: payment_link_v1}
+    forbid: [PRESENT_NOW, SCHEDULE_PRESENTMENT]
+
+  - id: INS_DEAD
+    when: {cause: INSTRUMENT_DEFECT, subtype_in: [ACCOUNT_CLOSED, ACCOUNT_FROZEN]}
+    candidates:
+      - {action: SEND_PAYMENT_LINK, channel: WHATSAPP, template: payment_link_v1}
+      - {action: STOP_MARK_CHURN, after_days: 5}
+    forbid: [PRESENT_NOW, SCHEDULE_PRESENTMENT]
+
+  - id: RSK
+    when: {cause_in: [RISK_BLOCK, UNKNOWN]}
+    candidates:
+      - {action: ESCALATE_TO_MERCHANT}
+    forbid: [PRESENT_NOW, SCHEDULE_PRESENTMENT, PRE_DEBIT_NOTICE, TOPUP_NUDGE,
+             SEND_PAYMENT_LINK, REQUEST_REAUTH]
+
+fallback:
+  candidates: [{action: NO_ACTION}]

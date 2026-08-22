@@ -1,0 +1,100 @@
+# config/taxonomy.yaml — source of truth for classification. If this drifts
+# from models/enums.py, this file wins and tests must fail loudly.
+# See docs/04-FAILURE-TAXONOMY.md. Verify codes against current Razorpay
+# error-code documentation before relying on this list in a live integration.
+
+version: 1
+
+default:
+  root_cause: UNKNOWN
+  subtype: NONE
+  disposition: TERMINAL
+  confidence: 0.0
+
+rules:
+  - id: BAL_001
+    root_cause: BALANCE_SHORTFALL
+    subtype: NONE
+    disposition: RECOVERABLE_TIMING
+    confidence: 0.95
+    codes: [INSUFFICIENT_FUNDS, NACH_INSUFFICIENT_BALANCE, U30_BALANCE, BT_INSUFFICIENT]
+    desc_contains: ["insufficient", "low balance", "not enough"]
+
+  - id: ISS_001
+    root_cause: ISSUER_DEGRADED
+    subtype: ISSUER_DOWN
+    disposition: RECOVERABLE_TIMING
+    confidence: 0.85
+    codes: [ISSUER_DOWN, BANK_UNAVAILABLE, U69, RB_DECLINED_UPSTREAM]
+    desc_contains: ["issuer", "bank unavailable", "upstream"]
+
+  - id: TEC_001
+    root_cause: TECHNICAL_TRANSIENT
+    subtype: NONE
+    disposition: RECOVERABLE_IMMEDIATE
+    confidence: 0.80
+    codes: [GATEWAY_TIMEOUT, NETWORK_ERROR, U16, RESPONSE_TIMEOUT]
+    desc_contains: ["timeout", "temporarily unavailable"]
+
+  - id: MND_REV
+    root_cause: MANDATE_DEFECT
+    subtype: REVOKED
+    disposition: TERMINAL
+    confidence: 1.00
+    codes: [MANDATE_REVOKED, UMN_REVOKED, NACH_MANDATE_CANCELLED]
+
+  - id: MND_EXP
+    root_cause: MANDATE_DEFECT
+    subtype: EXPIRED
+    disposition: TERMINAL
+    confidence: 1.00
+    codes: [MANDATE_EXPIRED, UMN_EXPIRED]
+
+  - id: MND_CAP
+    root_cause: MANDATE_DEFECT
+    subtype: AMOUNT_EXCEEDS_CAP
+    disposition: TERMINAL
+    confidence: 1.00
+    codes: [AMOUNT_EXCEEDS_MANDATE, DEBIT_LIMIT_EXCEEDED]
+
+  - id: MND_FRQ
+    root_cause: MANDATE_DEFECT
+    subtype: FREQUENCY_VIOLATION
+    disposition: TERMINAL
+    confidence: 1.00
+    codes: [FREQUENCY_VIOLATION, DUPLICATE_DEBIT_IN_PERIOD]
+
+  - id: INS_CLS
+    root_cause: INSTRUMENT_DEFECT
+    subtype: ACCOUNT_CLOSED
+    disposition: TERMINAL
+    confidence: 1.00
+    codes: [ACCOUNT_CLOSED, INVALID_ACCOUNT, NO_SUCH_ACCOUNT]
+
+  - id: INS_FRZ
+    root_cause: INSTRUMENT_DEFECT
+    subtype: ACCOUNT_FROZEN
+    disposition: TERMINAL
+    confidence: 0.95
+    codes: [ACCOUNT_FROZEN, ACCOUNT_BLOCKED, DEBIT_FREEZE]
+
+  - id: INS_DRM
+    root_cause: INSTRUMENT_DEFECT
+    subtype: ACCOUNT_DORMANT
+    disposition: RECOVERABLE_ACTION
+    confidence: 0.90
+    codes: [ACCOUNT_DORMANT, ACCOUNT_INACTIVE]
+
+  - id: INS_CRD
+    root_cause: INSTRUMENT_DEFECT
+    subtype: CARD_EXPIRED
+    disposition: RECOVERABLE_ACTION
+    confidence: 1.00
+    codes: [CARD_EXPIRED, EXPIRED_CARD]
+
+  - id: RSK_001
+    root_cause: RISK_BLOCK
+    subtype: NONE
+    disposition: TERMINAL
+    confidence: 0.90
+    codes: [DO_NOT_HONOUR, RISK_DECLINE, FRAUD_SUSPECTED, SECURITY_VIOLATION]
