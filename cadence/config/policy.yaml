@@ -38,6 +38,12 @@ constants:
   afa_exemption_ceiling_paise:
     value: 1500000
     source: UNVERIFIED
+  run_budget_max_presentments:
+    value: 10000
+    source: PRODUCT_CHOICE
+  run_budget_max_messages:
+    value: 10000
+    source: PRODUCT_CHOICE
 
 # Funding-window model weights (docs/05 Part A). Placeholders until M4's grid
 # search on the train split freezes them.
