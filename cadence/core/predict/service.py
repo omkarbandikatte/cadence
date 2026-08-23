@@ -28,7 +28,12 @@ def _customer_successful_doms(session: Session, customer_id: str, before, run_id
         session.query(Attempt.presented_at)
         .join(Cycle, Attempt.cycle_id == Cycle.id)
         .join(Mandate, Cycle.mandate_id == Mandate.id)
-        .filter(Mandate.customer_id == customer_id, Attempt.succeeded.is_(True), Attempt.presented_at < before)
+        .filter(
+            Mandate.customer_id == customer_id,
+            Attempt.succeeded.is_(True),
+            Attempt.presented_at < before,
+            Attempt.run_id == run_id,
+        )
         .all()
     )
     return tuple((presented_at + IST_OFFSET).day for (presented_at,) in rows)
