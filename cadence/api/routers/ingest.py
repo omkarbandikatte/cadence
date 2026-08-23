@@ -15,6 +15,7 @@ from cadence.core.classify.record import classify_and_record
 from cadence.core.ingest.normalize import ingest_failure, ingest_success, observed_success_rate_for
 from cadence.core.ingest.schemas import ReplayRequest, ReplayResponse
 from cadence.models.tables import CorpusMeta
+from cadence.sim.clock import at_simulated_time
 from cadence.sim.generator import generate_corpus
 
 router = APIRouter()
@@ -32,7 +33,7 @@ def replay(req: ReplayRequest, db: Session = Depends(get_db)) -> ReplayResponse:
     for cyc_id in g.cycle_order:
         cycle = g.world.cycles[cyc_id]
         mandate = g.world.mandates[cycle.mandate_id]
-        presented_at = datetime.combine(cycle.debit_date, datetime.min.time(), tzinfo=timezone.utc)
+        presented_at = at_simulated_time(cycle.debit_date)
 
         if g.cycle_status[cyc_id] == "SUCCESS":
             ingest_success(

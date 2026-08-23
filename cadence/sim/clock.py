@@ -6,8 +6,17 @@ simulated day.
 """
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, time, timedelta, timezone
 from typing import Protocol, runtime_checkable
+
+# Every simulated "day" ticks at this UTC hour (11:30 IST) — safely inside
+# business hours, so quiet-hours (21:00-09:00 IST) never blocks every single
+# action purely because the clock happens to land at midnight.
+SIMULATED_TIME_OF_DAY = time(6, 0)
+
+
+def at_simulated_time(d) -> datetime:
+    return datetime.combine(d, SIMULATED_TIME_OF_DAY, tzinfo=timezone.utc)
 
 
 @runtime_checkable

@@ -39,6 +39,9 @@ fit-predict:
 predict-report:
 	$(ENV) $(PY) -m cadence.sim.predict_report --seed $(SEED)
 
+run-a1-e2e:
+	$(ENV) $(PY) -m cadence.sim.run_a1_e2e
+
 eval:
 	@echo "M6 not yet built — see docs/10-EVALUATION.md" && exit 1
 	# $(PY) -m cadence.eval.runners --seed $(SEED)

@@ -1,8 +1,14 @@
-"""Adapter interfaces. Real Sim/Live implementations land in M5 — this file's
-job for M3 is the GateToken requirement itself: bypassing the gate must be a
-type error, not a discipline problem. See docs/06-COMPLIANCE-GATE.md.
+"""Adapter interfaces. Real Sim implementations live in sim/adapters.py (they
+resolve against generator ground truth, which core/ must never import); Live
+implementations live in core/execute/live.py (they call the real Razorpay
+test-mode API and touch no ground truth, so they may live in core/). Every
+adapter method requires a GateToken — bypassing the gate is a type error, not
+a discipline problem. See docs/06-COMPLIANCE-GATE.md.
 """
 from __future__ import annotations
+
+from dataclasses import dataclass
+from datetime import date, datetime
 
 from cadence.core.compliance.gate import GateToken
 
@@ -22,9 +28,12 @@ class BaseAdapter:
 class PresentmentAdapter(BaseAdapter):
     expected_action_types = {"PRESENT_NOW", "SCHEDULE_PRESENTMENT"}
 
-    def present(self, token: GateToken, *, mandate_id: str, cycle_id: str, amount_paise: int) -> dict:
+    def present(
+        self, token: GateToken, *, mandate_id: str, cycle_id: str, amount_paise: int,
+        attempt_date: date, attempt_no: int,
+    ) -> dict:
         self._require_token(token)
-        raise NotImplementedError("Sim/Live presentment adapters land in M5")
+        raise NotImplementedError
 
 
 class MessagingAdapter(BaseAdapter):
@@ -32,14 +41,26 @@ class MessagingAdapter(BaseAdapter):
         "PRE_DEBIT_NOTICE", "TOPUP_NUDGE", "REQUEST_REAUTH", "REQUEST_INSTRUMENT_UPDATE", "SEND_PAYMENT_LINK",
     }
 
-    def send(self, token: GateToken, *, customer_id: str, template_key: str, variables: dict) -> dict:
+    def send(
+        self, token: GateToken, *, customer_id: str, channel: str, template_key: str, variables: dict,
+    ) -> dict:
         self._require_token(token)
-        raise NotImplementedError("Sim/Live messaging adapters land in M5")
+        raise NotImplementedError
 
 
 class PaymentLinkAdapter(BaseAdapter):
     expected_action_types = {"SEND_PAYMENT_LINK"}
 
-    def create_link(self, token: GateToken, *, cycle_id: str, amount_paise: int) -> dict:
+    def create_link(
+        self, token: GateToken, *, cycle_id: str, amount_paise: int, created_at: datetime,
+    ) -> dict:
         self._require_token(token)
-        raise NotImplementedError("Sim/Live payment link adapters land in M5")
+        raise NotImplementedError
+
+
+@dataclass
+class Adapters:
+    presentment: PresentmentAdapter
+    messaging: MessagingAdapter
+    payment_link: PaymentLinkAdapter
+
