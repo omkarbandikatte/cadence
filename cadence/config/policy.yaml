@@ -45,16 +45,9 @@ constants:
     value: 10000
     source: PRODUCT_CHOICE
 
-# Funding-window model weights (docs/05 Part A). Placeholders until M4's grid
-# search on the train split freezes them.
-model_weights:
-  w_cust: 1.0
-  w_pop: 1.0
-  w_gap: 1.0
-  w_iss: 1.0
-  w_pen: 1.0
-  min_history_successes: 3
-  circular_gaussian_sigma_days: 1.5
+# Funding-window model weights live in config/model_weights.yaml, not here —
+# sim/fit_predict_weights.py rewrites that file after the M4 grid search, and
+# a full-file YAML rewrite here would destroy this file's comments/sources.
 
 # population_term(D) — fixed day-of-month prior, index 0 = day 1 ... index 30 = day 31.
 # Placeholder shape: mass concentrated at month start with a secondary bump at

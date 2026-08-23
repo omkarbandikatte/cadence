@@ -33,6 +33,12 @@ validate-corpus:
 classify-report:
 	$(ENV) $(PY) -m cadence.sim.classify_report --seed $(SEED)
 
+fit-predict:
+	$(ENV) $(PY) -m cadence.sim.fit_predict_weights --seed $(SEED)
+
+predict-report:
+	$(ENV) $(PY) -m cadence.sim.predict_report --seed $(SEED)
+
 eval:
 	@echo "M6 not yet built — see docs/10-EVALUATION.md" && exit 1
 	# $(PY) -m cadence.eval.runners --seed $(SEED)

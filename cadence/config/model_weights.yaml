@@ -1,0 +1,7 @@
+w_cust: 0.5
+w_pop: 0.3
+w_gap: 1.0
+w_iss: 1.0
+w_pen: 0.5
+min_history_successes: 3
+circular_gaussian_sigma_days: 1.5
