@@ -17,7 +17,6 @@ import hashlib
 import numpy as np
 
 from cadence.db import SessionLocal
-from cadence.models.base import new_id
 from cadence.models.tables import (
     Customer,
     Cycle,
@@ -73,6 +72,18 @@ INSTRUMENT_SUBTYPES = [
 
 def _shift_sunday(d: date) -> date:
     return d + timedelta(days=1) if d.weekday() == 6 else d
+
+
+_CROCKFORD_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
+
+
+def _seeded_id(rng: np.random.Generator, prefix: str) -> str:
+    """A ULID-shaped id derived from the corpus's own seeded RNG, so
+    `generate_corpus(seed, ...)` is byte-reproducible — real `new_id()`
+    (models/base.py) embeds wall-clock time and OS randomness and must never
+    be used inside the generator."""
+    chars = "".join(_CROCKFORD_ALPHABET[i] for i in rng.integers(0, len(_CROCKFORD_ALPHABET), size=26))
+    return f"{prefix}_{chars}"
 
 
 def _salaried_calendar(rng: np.random.Generator, month_end: bool) -> dict[date, int]:
@@ -173,10 +184,24 @@ class GeneratedCorpus:
     cause_mix: dict[str, int] = field(default_factory=dict)
 
 
+def ground_truth_root_cause(world: bank.World, cycle_first_code: dict[str, str], cyc_id: str) -> str:
+    """The generator's own answer to "why did this fail" — for scoring the
+    classifier only. core/ must never call this."""
+    designed = world.designed_causes.get(cyc_id)
+    if designed is not None:
+        return designed.root_cause
+    code = cycle_first_code[cyc_id]
+    if code in ("MANDATE_EXPIRED", "MANDATE_REVOKED", "AMOUNT_EXCEEDS_MANDATE"):
+        return "MANDATE_DEFECT"
+    if code == "ISSUER_DOWN":
+        return "ISSUER_DEGRADED"
+    return "BALANCE_SHORTFALL"
+
+
 def generate_corpus(seed: int, n_customers: int = 300, write_to_db: bool = True) -> GeneratedCorpus:
     ss = np.random.SeedSequence(seed)
-    (rng_cust, rng_cal, rng_mnd, rng_cyc, rng_out, rng_ovr, rng_bank, rng_split) = [
-        np.random.default_rng(s) for s in ss.spawn(8)
+    (rng_cust, rng_cal, rng_mnd, rng_cyc, rng_out, rng_ovr, rng_bank, rng_split, rng_ids) = [
+        np.random.default_rng(s) for s in ss.spawn(9)
     ]
 
     world = bank.World()
@@ -187,7 +212,7 @@ def generate_corpus(seed: int, n_customers: int = 300, write_to_db: bool = True)
     customer_ids: list[str] = []
     customer_segment: dict[str, str] = {}
     for i in range(n_customers):
-        cid = new_id("cus")
+        cid = _seeded_id(rng_ids, "cus")
         segment = rng_cust.choice(segments, p=seg_p)
         issuer = rng_cust.choice(ISSUERS)
         customer_ids.append(cid)
@@ -204,7 +229,7 @@ def generate_corpus(seed: int, n_customers: int = 300, write_to_db: bool = True)
     )
     mandate_customer_source = customer_ids + second_mandate_customers
     for cid in mandate_customer_source:
-        mid = new_id("mnd")
+        mid = _seeded_id(rng_ids, "mnd")
         max_amount = int(rng_mnd.choice(SUBSCRIPTION_TIERS_PAISE, p=SUBSCRIPTION_TIER_WEIGHTS))
         debit_day = int(rng_mnd.integers(1, 29))
         rail = str(rng_mnd.choice(RAILS, p=RAIL_WEIGHTS))
@@ -254,7 +279,7 @@ def generate_corpus(seed: int, n_customers: int = 300, write_to_db: bool = True)
             amount = mandate.max_amount_paise
             if mid in cap_exceeding_candidates and idx == 1:
                 amount = int(mandate.max_amount_paise * 1.5)
-            cyc_id = new_id("cyc")
+            cyc_id = _seeded_id(rng_ids, "cyc")
             cycle_ids.append(cyc_id)
             cycle_mandate[cyc_id] = mid
             world.cycles[cyc_id] = bank.CycleGT(
@@ -462,20 +487,10 @@ def generate_corpus(seed: int, n_customers: int = 300, write_to_db: bool = True)
     for c in cycle_ids:
         if cycle_status[c] != "FAILED":
             continue
-        designed = world.designed_causes.get(c)
-        if designed is not None:
-            cause = designed.root_cause
-        else:
-            code = cycle_first_code[c]
-            if code in ("MANDATE_EXPIRED", "MANDATE_REVOKED", "AMOUNT_EXCEEDS_MANDATE"):
-                cause = "MANDATE_DEFECT"
-            elif code == "ISSUER_DOWN":
-                cause = "ISSUER_DEGRADED"
-            else:
-                cause = "BALANCE_SHORTFALL"
+        cause = ground_truth_root_cause(world, cycle_first_code, c)
         cause_mix[cause] = cause_mix.get(cause, 0) + 1
 
-    corpus_id = new_id("cor")
+    corpus_id = _seeded_id(rng_ids, "cor")
     generated = GeneratedCorpus(
         corpus_id=corpus_id,
         seed=seed,

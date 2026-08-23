@@ -59,6 +59,7 @@ class GateResult(str, Enum):
 
 
 class LedgerEventType(str, Enum):
+    WEBHOOK_RECEIVED = "WEBHOOK_RECEIVED"
     FAILURE_INGESTED = "FAILURE_INGESTED"
     CLASSIFIED = "CLASSIFIED"
     PREDICTED = "PREDICTED"

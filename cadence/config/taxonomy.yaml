@@ -5,6 +5,13 @@
 
 version: 1
 
+# Corroboration pass (docs/04-FAILURE-TAXONOMY.md, classification algorithm
+# step 3). issuer_health.observed_success_rate is the only issuer-health
+# signal core/ may read — never is_outage.
+corroboration:
+  issuer_normal_success_rate: 0.75   # at/above this, an ISSUER_DEGRADED call looks wrong
+  issuer_collapsed_success_rate: 0.55  # at/below this, a co-occurring outage is likely real
+
 default:
   root_cause: UNKNOWN
   subtype: NONE

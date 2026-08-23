@@ -30,6 +30,9 @@ corpus:
 validate-corpus:
 	$(ENV) $(PY) -m cadence.sim.validate --seed $(SEED)
 
+classify-report:
+	$(ENV) $(PY) -m cadence.sim.classify_report --seed $(SEED)
+
 eval:
 	@echo "M6 not yet built — see docs/10-EVALUATION.md" && exit 1
 	# $(PY) -m cadence.eval.runners --seed $(SEED)
