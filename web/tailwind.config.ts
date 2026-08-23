@@ -9,8 +9,19 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
+        paper: "var(--paper)",
+        "paper-2": "var(--paper-2)",
+        rule: "var(--rule)",
+        ink: "var(--ink)",
+        "ink-muted": "var(--ink-muted)",
+        stamp: "var(--stamp)",
+        recovered: "var(--recovered)",
+        "at-risk": "var(--at-risk)",
+        blocked: "var(--blocked)",
+      },
+      fontFamily: {
+        mono: ["var(--font-mono)", "ui-monospace", "SFMono-Regular", "monospace"],
+        sans: ["var(--font-sans)", "-apple-system", "sans-serif"],
       },
     },
   },

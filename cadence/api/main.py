@@ -2,12 +2,21 @@
 from __future__ import annotations
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
-from cadence.api.routers import ingest, webhooks
+from cadence.api.routers import actions, ingest, reads, webhooks
 
 app = FastAPI(title="Cadence", version="0.1.0")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.include_router(webhooks.router)
 app.include_router(ingest.router)
+app.include_router(reads.router)
+app.include_router(actions.router)
 
 
 @app.get("/healthz")
