@@ -10,8 +10,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from cadence.api.deps import get_db
+from cadence.core.compliance import kill_switch
+from cadence.core.ledger import writer as ledger
 from cadence.core.policy.cancellation import cancel_pending_for_cycle
-from cadence.models.tables import Cycle
+from cadence.models.tables import Customer, Cycle
 
 router = APIRouter()
 
@@ -30,3 +32,31 @@ def cancel_pending(cycle_id: str, run_id: str, db: Session = Depends(get_db)):
     )
     db.commit()
     return {"cancelled": cancelled}
+
+
+@router.post("/customers/{customer_id}/opt-out")
+def opt_out(customer_id: str, run_id: str, db: Session = Depends(get_db)):
+    customer = db.get(Customer, customer_id)
+    if customer is None:
+        raise HTTPException(status_code=404, detail=f"unknown customer_id {customer_id}")
+    now = datetime.now(timezone.utc)
+    customer.opted_out_at = now
+    ledger.record(
+        db, event_type="CUSTOMER_OPTED_OUT", run_id=run_id, occurred_at=now,
+        rationale="Customer opted out of all contact via the merchant dashboard.",
+        customer_id=customer.id,
+    )
+    db.commit()
+    return {"opted_out_at": now}
+
+
+@router.post("/merchant/pause-automation")
+def pause_automation():
+    kill_switch.pause_merchant()
+    return {"paused": True}
+
+
+@router.post("/merchant/resume-automation")
+def resume_automation():
+    kill_switch.resume_merchant()
+    return {"paused": False}

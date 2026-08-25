@@ -38,8 +38,9 @@ export default function CyclesPage() {
         <select value={state} onChange={(e) => setState(e.target.value)} className="card px-2 py-1 text-sm">
           <option value="">all states</option>
           <option value="RECOVERED">recovered</option>
-          <option value="FAILED">failed</option>
-          <option value="OPEN">open</option>
+          <option value="IN_RECOVERY">in recovery</option>
+          <option value="SCHEDULED">scheduled</option>
+          <option value="ABANDONED">abandoned</option>
         </select>
       </div>
       <div className="card overflow-x-auto">

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { RunProvider } from "@/lib/RunContext";
 import { Nav } from "@/components/Nav";
+import { DemoPanel } from "@/components/DemoPanel";
 
 export const metadata: Metadata = {
   title: "Cadence — recurring debit recovery",
@@ -19,6 +20,7 @@ export default function RootLayout({
         <RunProvider>
           <Nav />
           <main className="max-w-6xl mx-auto px-4 py-6">{children}</main>
+          <DemoPanel />
         </RunProvider>
       </body>
     </html>
