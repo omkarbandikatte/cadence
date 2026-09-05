@@ -1,0 +1,23 @@
+[0:00-0:35]
+Welcome to Cadence, a recovery system for failed recurring payments such as UPI Autopay and e-NACH. When a debit fails, the reason matters. It may be a balance shortfall, a degraded bank rail, a revoked mandate, an instrument problem, or a risk block. Most retry systems use the same fixed calendar for all of them. Cadence asks three questions instead: why did this fail, when is the customer most likely to be funded, and are we allowed to act right now? The goal is bounded recovery: every action must be permitted, explainable, and recorded.
+
+[0:35-1:15]
+This is the Cadence workflow. First, ingest receives a webhook or a replayed event and normalises it into one failure event. Next, classify maps the gateway or bank code to a root cause using deterministic taxonomy rules. Predict then estimates a funding window from successful debit history and population priors. That timing step is used when timing is the problem, such as insufficient balance. Policy combines the cause, prediction, attempt count, and cycle state to propose a bounded action: retry, notify, create a payment link, request re-authorisation, or stop.
+
+[1:15-1:50]
+The compliance gate is the single choke point between a proposal and a real action. No code path may present a debit or send a message without passing through the gate. The checks run again at execution time because the world can change after scheduling. A mandate may be revoked, a customer may opt out, a contact cap may be reached, or a required notice may be missing. A blocked action is a valid result. It is recorded with the failed checks instead of being hidden.
+
+[1:50-2:20]
+Now the results summary compares the baseline, Cadence, and an oracle on the same synthetic batch and through the same simulator. The baseline is fixed-interval retry. The oracle is a ground-truth ceiling with information unavailable in a real deployment. In this run, the baseline recovery rate is 29.8 percent, Cadence reaches 36.5 percent, and the oracle reaches 79.3 percent. Cadence records zero compliance violations. That zero does not mean blocked actions disappeared; it means the gate handled them explicitly and the ledger preserved the evidence.
+
+[2:20-3:00]
+The portfolio view answers the merchant's first question: what is happening to my money? It separates failed work, cycles in recovery, recovered value, and cases that need a human. The failure breakdown is also important. Balance shortfall is only one cause. Mandate defects, instrument defects, issuer degradation, technical failures, and risk blocks need different interventions. This is why classification comes before policy: the system should not use a retry for a failure that needs a new mandate or human review.
+
+[3:00-3:40]
+Here is the run comparison. The month strip is the timing idea: each bar shows the historical probability that a debit clears on that day for this customer. The markers show fixed-interval retry and Cadence. A calendar retry spends another attempt at a fixed offset, even in a low-balance period. Cadence moves the attempt toward the funding peak while respecting policy and compliance. It does not read a hidden future balance; it estimates a funding window from available history.
+
+[3:40-4:15]
+The comparison is reproducible because all three arms use the same corpus, seed, clock, and bank simulator. The decision path is deterministic. Its basis can be customer history, a population prior, a blended estimate, or issuer recovery, and the decision row records which basis dominated. The goal is not to retry more often. It is to know when timing is the problem, and to stop or change instruments when it is not.
+
+[4:15-4:48]
+The cycles screen moves from portfolio totals to one billing cycle. Each row shows the cycle, customer, amount, state, and presentations used. Opening a cycle gives the timeline: failure, classification, prediction, decision, gate result, execution, and outcome. The ledger keeps those decisions, blocks, messages, presentments, links, recoveries, and abandoned outcomes in one append-only audit trail. Cadence diagnoses the cause, chooses the right window, checks the action at the last responsible moment, and leaves a complete record. Thank you.

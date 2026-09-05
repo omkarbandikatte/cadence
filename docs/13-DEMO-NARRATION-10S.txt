@@ -1,0 +1,58 @@
+[00]
+Welcome to Cadence, a recovery system for failed recurring payments. It helps merchants recover revenue while keeping every action controlled.
+[10]
+The landing page introduces the problem: failed debits should not all receive the same automatic retry treatment.
+[20]
+Cadence uses six stages: ingest, classify, predict, policy, compliance, and execution. Every stage produces an auditable record.
+[30]
+The workflow begins with an event, identifies its root cause, estimates timing when useful, and proposes one bounded intervention.
+[40]
+The compliance gate is the single choke point. A debit or message cannot reach an adapter until the gate allows it.
+[50]
+The system records decisions and outcomes in one ledger. That makes the recovery process explainable instead of opaque.
+[60]
+These results compare a fixed-interval baseline, Cadence, and an oracle using the same batch and simulator.
+[70]
+The recovery-rate row shows the selected run: baseline at 29.8 percent, Cadence at 36.5 percent, and the oracle at 79.3 percent.
+[80]
+The comparison also measures recovered value, presentments, messages, wasted terminal attempts, and compliance violations.
+[90]
+Cadence reports zero compliance violations because blocked actions are handled by the gate and preserved in the ledger.
+[100]
+The portfolio view shows the merchant what is at risk, what is in recovery, what has recovered, and what needs attention.
+[110]
+The cause breakdown separates balance shortfall from mandate, instrument, issuer, technical, and risk problems.
+[120]
+The run comparison visualises customer timing. The month strip shows when this customer is historically most likely to clear a debit.
+[130]
+The markers compare fixed-interval retry with Cadence. Cadence moves toward the funding peak instead of blindly retrying on a calendar.
+[140]
+The model uses available customer history and population priors. It does not read a hidden future bank balance.
+[150]
+The decision remains bounded by policy and compliance. Timing can improve a balance recovery, but it cannot override a blocked action.
+[160]
+The comparison is reproducible: the baseline, Cadence, and oracle share the same corpus, seed, virtual clock, and bank simulator.
+[170]
+The cycles screen moves from portfolio totals to individual billing cycles. Each row identifies the cycle, amount, state, and attempts.
+[180]
+Opening a cycle gives the operator a focused view of one customer and one mandate, including its current recovery state.
+[190]
+The cycle detail combines the timing strip, diagnosis, prediction basis, and the number of presentations used against the cap.
+[200]
+The timeline shows the failure, classification, prediction, decision, gate result, execution, and outcome in chronological order.
+[210]
+This makes the system inspectable: an operator can see not only what happened, but why the next action was selected.
+[220]
+The ledger is append-only. It records decisions, blocks, messages, presentments, links, recoveries, and abandoned outcomes.
+[230]
+An auditor can filter the ledger and read the plain-English rationale and block code for each action.
+[240]
+The ledger is the final source of truth for what Cadence proposed, what the gate allowed, and what execution returned.
+[250]
+Cadence is designed for bounded recovery, not maximum activity. It recovers where timing helps and stops where it does not.
+[260]
+The same core logic runs in evaluation and live modes. Only the clock and execution adapters change.
+[270]
+Cadence diagnoses the cause, chooses the right window, checks the action at the last responsible moment, and leaves a complete audit trail.
+[280]
+That is Cadence: recovery that is measurable, compliant, and explainable. Thank you.

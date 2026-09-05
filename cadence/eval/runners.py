@@ -79,8 +79,14 @@ def load_corpus(seed: int, n_customers: int = 300):
     return generate_corpus(seed, n_customers=n_customers, write_to_db=False)
 
 
-def _create_run(session, *, mode: str, corpus_id: str, seed: int) -> Run:
-    run = Run(mode=mode, corpus_id=corpus_id, seed=seed, policy_config_hash=f"{mode.lower()}-v1")
+def _create_run(session, *, mode: str, corpus_id: str, seed: int, merchant_id: str = "demo_merchant") -> Run:
+    run = Run(
+        merchant_id=merchant_id,
+        mode=mode,
+        corpus_id=corpus_id,
+        seed=seed,
+        policy_config_hash=f"{mode.lower()}-v1",
+    )
     session.add(run)
     session.flush()
     return run
@@ -102,9 +108,9 @@ def reset_cycles(session, g) -> None:
     session.commit()
 
 
-def run_agent(session, g, seed: int) -> ArmResult:
+def run_agent(session, g, seed: int, merchant_id: str = "demo_merchant") -> ArmResult:
     reset_cycles(session, g)
-    run = _create_run(session, mode="AGENT", corpus_id=g.corpus_id, seed=seed)
+    run = _create_run(session, mode="AGENT", corpus_id=g.corpus_id, seed=seed, merchant_id=merchant_id)
     world = _fresh_world(g)
     rng_present = np.random.default_rng(seed * 10 + 1)
     rng_link = np.random.default_rng(seed * 10 + 2)
@@ -143,9 +149,9 @@ def run_agent(session, g, seed: int) -> ArmResult:
     return ArmResult(run_id=run.id, mode="AGENT", corpus_id=g.corpus_id, seed=seed)
 
 
-def run_baseline(session, g, seed: int) -> ArmResult:
+def run_baseline(session, g, seed: int, merchant_id: str = "demo_merchant") -> ArmResult:
     reset_cycles(session, g)
-    run = _create_run(session, mode="BASELINE", corpus_id=g.corpus_id, seed=seed)
+    run = _create_run(session, mode="BASELINE", corpus_id=g.corpus_id, seed=seed, merchant_id=merchant_id)
     world = _fresh_world(g)
     rng = np.random.default_rng(seed * 10 + 3)
     constants = load_policy_constants()
@@ -242,9 +248,9 @@ def _send_dunning(session, *, cycle_id: str, mandate_id: str, customer_id: str, 
     )
 
 
-def run_oracle(session, g, seed: int) -> ArmResult:
+def run_oracle(session, g, seed: int, merchant_id: str = "demo_merchant") -> ArmResult:
     reset_cycles(session, g)
-    run = _create_run(session, mode="ORACLE", corpus_id=g.corpus_id, seed=seed)
+    run = _create_run(session, mode="ORACLE", corpus_id=g.corpus_id, seed=seed, merchant_id=merchant_id)
     world = _fresh_world(g)
     constants = load_policy_constants()
     min_cooling_off = constants.value("min_cooling_off_days")

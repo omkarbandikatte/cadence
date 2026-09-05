@@ -77,6 +77,7 @@ class Run(Base):
     __tablename__ = "runs"
 
     id: Mapped[str] = mapped_column(Text, primary_key=True, default=lambda: new_id("run"))
+    merchant_id: Mapped[str] = mapped_column(Text, index=True, default="demo_merchant")
     mode: Mapped[str] = mapped_column(Text)
     corpus_id: Mapped[str] = mapped_column(Text)
     seed: Mapped[int] = mapped_column(Integer)

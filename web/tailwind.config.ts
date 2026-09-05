@@ -11,10 +11,12 @@ const config: Config = {
       colors: {
         paper: "var(--paper)",
         "paper-2": "var(--paper-2)",
+        "paper-3": "var(--paper-3)",
         rule: "var(--rule)",
         ink: "var(--ink)",
         "ink-muted": "var(--ink-muted)",
         stamp: "var(--stamp)",
+        "stamp-deep": "var(--stamp-deep)",
         recovered: "var(--recovered)",
         "at-risk": "var(--at-risk)",
         blocked: "var(--blocked)",

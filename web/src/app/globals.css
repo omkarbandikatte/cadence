@@ -3,25 +3,32 @@
 @tailwind utilities;
 
 :root {
-  --paper: #EEF2EA;
-  --paper-2: #F7F9F5;
-  --rule: #C9D2C4;
-  --ink: #1B2432;
-  --ink-muted: #5C6875;
-  --stamp: #5B3FA8;
-  --recovered: #1F6B4A;
-  --at-risk: #A6641C;
-  --blocked: #6B7280;
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-mono: "SF Mono", ui-monospace, "IBM Plex Mono", monospace;
+  /* Dark violet system — see docs/09-DASHBOARD.md for the rationale. */
+  --paper: #1C1C1C;
+  --paper-2: #2C303D;
+  --paper-3: #23262F;
+  --rule: #383D4D;
+  --ink: #FFFFFF;
+  --ink-muted: #9BA0AE;
+  --stamp: #A089E6;
+  --stamp-deep: #271A58;
+  --recovered: #34D399;
+  --at-risk: #E0A458;
+  --blocked: #7C8291;
+  --font-sans: "InterVariable", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "IBM Plex Mono", monospace;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   color: var(--ink);
   background: var(--paper);
   font-family: var(--font-sans);
-  font-size: 15px;
-  line-height: 1.55;
+  font-size: 16px;
+  line-height: 1.62;
 }
 
 .tabular {
@@ -31,7 +38,7 @@ body {
 
 .eyebrow {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ink-muted);
@@ -40,16 +47,156 @@ body {
 .card {
   background: var(--paper-2);
   border: 1px solid var(--rule);
-  border-radius: 4px;
+  border-radius: 10px;
+  transition: transform 240ms ease, border-color 240ms ease, box-shadow 240ms ease, background-color 240ms ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--stamp) 45%, var(--rule));
+  box-shadow: 0 18px 32px -24px rgba(160, 137, 230, 0.7);
 }
 
 .id-cell {
   font-family: var(--font-mono);
   font-size: 12px;
-  background: var(--paper-2);
+  background: var(--paper-3);
   border: 1px solid var(--rule);
-  border-radius: 3px;
+  border-radius: 5px;
   padding: 1px 6px;
+}
+
+.hero-gradient {
+  background:
+    radial-gradient(ellipse 900px 500px at 50% 0%, rgba(160, 137, 230, 0.28), transparent 60%),
+    radial-gradient(ellipse 700px 500px at 85% 15%, rgba(39, 26, 88, 0.9), transparent 55%),
+    var(--paper);
+}
+
+.hero-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(40px);
+  opacity: 0.55;
+  animation: orb-float 10s ease-in-out infinite;
+}
+
+.app-shell-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 18% 20%, rgba(160, 137, 230, 0.12), transparent 28%),
+    radial-gradient(circle at 85% 12%, rgba(39, 26, 88, 0.4), transparent 34%),
+    radial-gradient(circle at 50% 100%, rgba(160, 137, 230, 0.08), transparent 30%),
+    var(--paper);
+}
+
+.app-shell-bg::before,
+.app-shell-bg::after {
+  content: "";
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(30px);
+  opacity: 0.4;
+  animation: orb-drift 14s ease-in-out infinite;
+}
+
+.app-shell-bg::before {
+  width: 28rem;
+  height: 28rem;
+  left: -8rem;
+  top: 20%;
+  background: radial-gradient(circle, rgba(160, 137, 230, 0.35), rgba(160, 137, 230, 0));
+}
+
+.app-shell-bg::after {
+  width: 24rem;
+  height: 24rem;
+  right: -6rem;
+  top: 54%;
+  background: radial-gradient(circle, rgba(52, 211, 153, 0.2), rgba(52, 211, 153, 0));
+  animation-delay: 2s;
+}
+
+.animated-grid {
+  background-image:
+    linear-gradient(to right, rgba(160, 137, 230, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(160, 137, 230, 0.08) 1px, transparent 1px);
+  background-size: 44px 44px;
+  animation: grid-shift 16s linear infinite;
+}
+
+.reveal {
+  animation: fade-up 640ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.pulse-glow {
+  animation: pulse-glow 3.2s ease-in-out infinite;
+}
+
+.interactive-btn {
+  transition: transform 180ms ease, filter 180ms ease, box-shadow 200ms ease;
+}
+
+.interactive-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.03);
+  box-shadow: 0 12px 20px -16px rgba(160, 137, 230, 0.9);
+}
+
+.interactive-btn:active {
+  transform: translateY(0);
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(160, 137, 230, 0.18);
+  }
+  50% {
+    box-shadow: 0 0 0 9px rgba(160, 137, 230, 0);
+  }
+}
+
+@keyframes grid-shift {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 44px 44px;
+  }
+}
+
+@keyframes orb-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(0, -14px, 0) scale(1.04);
+  }
+}
+
+@keyframes orb-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(14px, -10px, 0);
+  }
 }
 
 :focus-visible {
@@ -58,6 +205,10 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
   * {
     animation: none !important;
     transition: none !important;

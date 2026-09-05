@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
-from cadence.api.deps import get_db
+from cadence.api.deps import get_db, get_merchant_id
 from cadence.eval.auditor import audit
 from cadence.eval.metrics import captured_of_headroom, compute_run_metrics
 from cadence.models.tables import (
@@ -25,33 +25,55 @@ from cadence.models.tables import (
 router = APIRouter()
 
 
+def _require_merchant_run(db: Session, run_id: str, merchant_id: str) -> Run:
+    run = db.get(Run, run_id)
+    if run is None or run.merchant_id != merchant_id:
+        raise HTTPException(status_code=404, detail=f"unknown run_id {run_id}")
+    return run
+
+
 @router.get("/runs")
-def list_runs(mode: str | None = None, limit: int = 20, db: Session = Depends(get_db)):
-    q = db.query(Run)
+def list_runs(
+    mode: str | None = None,
+    limit: int = 20,
+    db: Session = Depends(get_db),
+    merchant_id: str = Depends(get_merchant_id),
+):
+    q = db.query(Run).filter(Run.merchant_id == merchant_id)
     if mode:
         q = q.filter(Run.mode == mode)
     runs = q.order_by(desc(Run.started_at)).limit(limit).all()
     return {
         "runs": [
-            {"id": r.id, "mode": r.mode, "corpus_id": r.corpus_id, "seed": r.seed, "metrics": r.metrics}
+            {
+                "id": r.id,
+                "merchant_id": r.merchant_id,
+                "mode": r.mode,
+                "corpus_id": r.corpus_id,
+                "seed": r.seed,
+                "metrics": r.metrics,
+            }
             for r in runs
         ]
     }
 
 
 @router.get("/runs/{run_id}/metrics")
-def run_metrics(run_id: str, db: Session = Depends(get_db)):
-    run = db.get(Run, run_id)
-    if run is None:
-        raise HTTPException(status_code=404, detail=f"unknown run_id {run_id}")
+def run_metrics(run_id: str, db: Session = Depends(get_db), merchant_id: str = Depends(get_merchant_id)):
+    _require_merchant_run(db, run_id, merchant_id)
     return compute_run_metrics(db, run_id)
 
 
 @router.get("/runs/compare")
-def compare_runs(baseline: str, agent: str, oracle: str, db: Session = Depends(get_db)):
+def compare_runs(
+    baseline: str,
+    agent: str,
+    oracle: str,
+    db: Session = Depends(get_db),
+    merchant_id: str = Depends(get_merchant_id),
+):
     for run_id in (baseline, agent, oracle):
-        if db.get(Run, run_id) is None:
-            raise HTTPException(status_code=404, detail=f"unknown run_id {run_id}")
+        _require_merchant_run(db, run_id, merchant_id)
 
     def _clean(v):
         return None if isinstance(v, float) and (v != v) else v  # NaN check, no import needed
@@ -96,11 +118,12 @@ def compare_runs(baseline: str, agent: str, oracle: str, db: Session = Depends(g
 
 
 @router.get("/portfolio")
-def portfolio(run_id: str, db: Session = Depends(get_db)):
+def portfolio(run_id: str, db: Session = Depends(get_db), merchant_id: str = Depends(get_merchant_id)):
     from sqlalchemy import func
 
     from cadence.models.tables import Attempt, PendingAction
 
+    _require_merchant_run(db, run_id, merchant_id)
     m = compute_run_metrics(db, run_id)
     needs_you = (
         db.query(Decision)
@@ -142,7 +165,7 @@ def portfolio(run_id: str, db: Session = Depends(get_db)):
 
 
 @router.get("/cycles/{cycle_id}/month-strip")
-def cycle_month_strip(cycle_id: str, run_id: str, db: Session = Depends(get_db)):
+def cycle_month_strip(cycle_id: str, run_id: str, db: Session = Depends(get_db), merchant_id: str = Depends(get_merchant_id)):
     """The signature element's data source — docs/09-DASHBOARD.md.
 
     Day-of-month success density for this customer (blended customer/population
@@ -154,6 +177,7 @@ def cycle_month_strip(cycle_id: str, run_id: str, db: Session = Depends(get_db))
     from cadence.core.predict.service import IST_OFFSET, _customer_successful_doms
     from cadence.models.tables import Attempt
 
+    _require_merchant_run(db, run_id, merchant_id)
     cycle = db.get(Cycle, cycle_id)
     if cycle is None:
         raise HTTPException(status_code=404, detail=f"unknown cycle_id {cycle_id}")
@@ -190,11 +214,19 @@ def cycle_month_strip(cycle_id: str, run_id: str, db: Session = Depends(get_db))
 
 
 @router.get("/runs/compare/exemplar")
-def compare_exemplar(baseline: str, agent: str, db: Session = Depends(get_db)):
+def compare_exemplar(
+    baseline: str,
+    agent: str,
+    db: Session = Depends(get_db),
+    merchant_id: str = Depends(get_merchant_id),
+):
     """Picks the cycle for the comparison screen's hero month strip: one the
     agent recovered and the baseline did not, preferring the most baseline
     attempts (the starkest hollow-markers-in-the-dead-zone contrast)."""
     from cadence.models.tables import Attempt
+
+    _require_merchant_run(db, baseline, merchant_id)
+    _require_merchant_run(db, agent, merchant_id)
 
     agent_recovered = {
         row[0]
@@ -231,9 +263,11 @@ def list_cycles(
     page: int = 1,
     page_size: int = 25,
     db: Session = Depends(get_db),
+    merchant_id: str = Depends(get_merchant_id),
 ):
     from cadence.models.tables import Attempt
 
+    _require_merchant_run(db, run_id, merchant_id)
     cycle_ids = [
         row[0]
         for row in db.query(Attempt.cycle_id).filter(Attempt.run_id == run_id).distinct().all()
@@ -257,7 +291,8 @@ def list_cycles(
 
 
 @router.get("/cycles/{cycle_id}")
-def cycle_timeline(cycle_id: str, run_id: str, db: Session = Depends(get_db)):
+def cycle_timeline(cycle_id: str, run_id: str, db: Session = Depends(get_db), merchant_id: str = Depends(get_merchant_id)):
+    _require_merchant_run(db, run_id, merchant_id)
     cycle = db.get(Cycle, cycle_id)
     if cycle is None:
         raise HTTPException(status_code=404, detail=f"unknown cycle_id {cycle_id}")
@@ -346,9 +381,11 @@ def ledger_view(
     page: int = 1,
     page_size: int = 100,
     db: Session = Depends(get_db),
+    merchant_id: str = Depends(get_merchant_id),
 ):
-    q = db.query(Ledger)
+    q = db.query(Ledger).join(Run, Run.id == Ledger.run_id).filter(Run.merchant_id == merchant_id)
     if run_id:
+        _require_merchant_run(db, run_id, merchant_id)
         q = q.filter(Ledger.run_id == run_id)
     if cycle_id:
         q = q.filter(Ledger.cycle_id == cycle_id)
@@ -371,9 +408,10 @@ def ledger_view(
 
 
 @router.get("/compliance/report")
-def compliance_report(run_id: str, db: Session = Depends(get_db)):
+def compliance_report(run_id: str, db: Session = Depends(get_db), merchant_id: str = Depends(get_merchant_id)):
     from cadence.core.compliance.config import load_policy_constants
 
+    _require_merchant_run(db, run_id, merchant_id)
     checks_run = db.query(Ledger).filter(Ledger.run_id == run_id, Ledger.event_type.in_(["DECISION", "GATE_BLOCKED"])).count()
     blocked_rows = db.query(Ledger).filter(Ledger.run_id == run_id, Ledger.event_type == "GATE_BLOCKED").all()
     by_code: dict[str, int] = {}

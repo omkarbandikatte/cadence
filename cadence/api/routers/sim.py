@@ -14,7 +14,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from cadence.api.deps import get_db
+from cadence.api.deps import get_db, get_merchant_id
 from cadence.core.execute.scheduler import run_due_actions
 from cadence.eval.report import _ensure_corpus_persisted
 from cadence.eval.runners import load_corpus, run_agent, run_baseline, run_oracle
@@ -55,7 +55,11 @@ class RunRequest(BaseModel):
 
 
 @router.post("/sim/run", status_code=201)
-def create_run(body: RunRequest, db: Session = Depends(get_db)):
+def create_run(
+    body: RunRequest,
+    db: Session = Depends(get_db),
+    merchant_id: str = Depends(get_merchant_id),
+):
     if body.mode not in ("BASELINE", "AGENT", "ORACLE"):
         raise HTTPException(status_code=400, detail="mode must be BASELINE, AGENT, or ORACLE")
     meta = db.get(CorpusMeta, body.corpus_id)
@@ -67,7 +71,7 @@ def create_run(body: RunRequest, db: Session = Depends(get_db)):
 
     g = load_corpus(body.seed, n_customers=meta.n_customers)
     runner = {"BASELINE": run_baseline, "AGENT": run_agent, "ORACLE": run_oracle}[body.mode]
-    result = runner(db, g, body.seed)
+    result = runner(db, g, body.seed, merchant_id=merchant_id)
 
     from cadence.eval.metrics import compute_run_metrics
 
@@ -84,9 +88,9 @@ class TickRequest(BaseModel):
 
 
 @router.post("/sim/tick")
-def tick(body: TickRequest, db: Session = Depends(get_db)):
+def tick(body: TickRequest, db: Session = Depends(get_db), merchant_id: str = Depends(get_merchant_id)):
     run = db.get(Run, body.run_id)
-    if run is None:
+    if run is None or run.merchant_id != merchant_id:
         raise HTTPException(status_code=404, detail=f"unknown run_id {body.run_id}")
 
     default_start = at_simulated_time(START_DATE + timedelta(days=DAYS + 3))
@@ -119,7 +123,10 @@ class InjectRequest(BaseModel):
 
 
 @router.post("/sim/inject")
-def inject(body: InjectRequest, db: Session = Depends(get_db)):
+def inject(body: InjectRequest, db: Session = Depends(get_db), merchant_id: str = Depends(get_merchant_id)):
+    run = db.get(Run, body.run_id)
+    if run is None or run.merchant_id != merchant_id:
+        raise HTTPException(status_code=404, detail=f"unknown run_id {body.run_id}")
     if body.case not in CASE_IDS:
         raise HTTPException(status_code=400, detail=f"unknown case {body.case!r}; must be one of {CASE_IDS}")
     default_start = at_simulated_time(START_DATE + timedelta(days=DAYS + 3))

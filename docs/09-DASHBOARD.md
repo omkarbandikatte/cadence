@@ -1,52 +1,59 @@
 # 09 — Dashboard Spec
 
-Single merchant. Four screens. Built for one job: let someone who has never seen
-this product understand, in under three minutes, that money was recovered and
-that nothing improper happened.
+Single merchant. A marketing landing page plus four dashboard screens. Built
+for one job: let someone who has never seen this product understand, in under
+three minutes, that money was recovered and that nothing improper happened.
 
 ---
 
 ## Design direction
 
-Most fintech dashboards default to a dark shell with a neon accent, or a white
-card grid with a blue primary. Both read as templated and neither says anything
-about this subject.
-
-Ground it instead in the actual material world of Indian recurring payments: the
-**bank mandate form and the passbook**. Pale safety-paper stock, boxed character
-cells, violet rubber-stamp ink, dot-matrix statement printing. That vernacular is
-specific, it is instantly legible to an Indian payments audience, and it carries
-the right connotation — this is a system of record, not a growth dashboard.
+A dark violet system: near-black surfaces, a lavender-violet accent, white
+type. It reads as a modern product rather than a themed artifact, while
+keeping the same restraint the ledger metaphor always called for — one accent
+color, no decoration for its own sake, numbers that align.
 
 ### Tokens
 
 ```css
---paper:      #EEF2EA;  /* safety-paper green, the page */
---paper-2:    #F7F9F5;  /* raised surfaces */
---rule:       #C9D2C4;  /* hairlines, form-box borders */
---ink:        #1B2432;  /* primary text, near-black indigo */
---ink-muted:  #5C6875;
---stamp:      #5B3FA8;  /* violet stamp — the single accent */
---recovered:  #1F6B4A;  /* deep ledger green */
---at-risk:    #A6641C;  /* burnt amber, never red-alert red */
---blocked:    #6B7280;  /* grey — a block is normal, not an error */
+--paper:      #1C1C1C;  /* page background, near-black */
+--paper-2:    #2C303D;  /* raised surfaces — cards, nav */
+--paper-3:    #23262F;  /* nested surfaces inside cards */
+--rule:       #383D4D;  /* hairlines, borders */
+--ink:        #FFFFFF;  /* primary text */
+--ink-muted:  #9BA0AE;
+--stamp:      #A089E6;  /* violet accent — the single accent color */
+--stamp-deep: #271A58;  /* deep violet, used in gradients and the logo mark */
+--recovered:  #34D399;  /* success green */
+--at-risk:    #E0A458;  /* amber, never red-alert red */
+--blocked:    #7C8291;  /* grey — a block is normal, not an error */
 ```
 
 Deliberately **no red**. A blocked action is correct behaviour; colouring it red
 teaches the viewer to read your best feature as a failure. Blocks are grey and
-neutral. Only genuine faults get amber.
+neutral. Only genuine faults get amber. This rule survives the visual
+refresh — it is a compliance-communication choice, not a color scheme choice.
 
 ### Type
 
-- **Display:** a squarish technical grotesque with tight apertures — the register
-  of a printed form heading, not an editorial serif. Set in small caps for
-  section eyebrows with wide tracking, mimicking form field labels.
-- **Body:** a neutral humanist sans at a comfortable 15px/1.55.
-- **Data:** a tabular monospace for every rupee figure, date, ID and count.
-  Non-negotiable: numbers must align vertically down a column. This is a ledger.
+- **Display & body:** Geist Sans (`next/font/local`, variable weight) — a
+  squarish geometric grotesk, close in spirit to Aeonik. Section eyebrows are
+  set in the monospace face, uppercase, tracked wide, like a form field label.
+- **Data:** Geist Mono for every rupee figure, date, ID and count.
+  Non-negotiable: numbers must align vertically down a column. This is still
+  a ledger, just a dark one.
 
-IDs render in a boxed-cell treatment — thin rules between character groups, like
-the boxes on a NACH form: `mnd│01H│K4Q│2XP`.
+IDs keep the boxed-cell treatment — thin rules around each id, like the boxes
+on a NACH form: `cyc_9F2K…`.
+
+### Landing page
+
+A marketing entry point lives at `/`; the dashboard lives at `/app/*`. The
+landing page states the product in one headline, shows a live-shaped preview
+of the portfolio board (Failed → In recovery → Recovered), explains the
+six-stage loop, restates the two compliance guarantees in plain language, and
+reports the actual baseline/agent/oracle numbers from a real evaluation run —
+not fabricated testimonials or customer logos, since none exist yet.
 
 ### The signature element — the Month Strip
 

@@ -1,8 +1,13 @@
 import type { Metadata } from "next";
+import localFont from "next/font/local";
+import "@fontsource/inter/index.css";
 import "./globals.css";
-import { RunProvider } from "@/lib/RunContext";
-import { Nav } from "@/components/Nav";
-import { DemoPanel } from "@/components/DemoPanel";
+
+const geistMono = localFont({
+  src: "./fonts/GeistMonoVF.woff",
+  variable: "--font-geist-mono",
+  weight: "100 900",
+});
 
 export const metadata: Metadata = {
   title: "Cadence — recurring debit recovery",
@@ -16,12 +21,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased">
-        <RunProvider>
-          <Nav />
-          <main className="max-w-6xl mx-auto px-4 py-6">{children}</main>
-          <DemoPanel />
-        </RunProvider>
+      <body className={`${geistMono.variable} antialiased`}>
+        {children}
       </body>
     </html>
   );

@@ -62,9 +62,10 @@ export default function ComparePage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-xl font-semibold mb-1">Run comparison</h1>
-        <p className="text-sm text-[var(--ink-muted)]">
-          Fixed-interval retry, no gate (baseline) vs Cadence (agent) vs the ground-truth ceiling (oracle).
+        <h1 className="text-3xl font-semibold mb-2">Run comparison</h1>
+        <p className="text-base text-[var(--ink-muted)]">
+          Measured recovery across a shared batch: fixed-interval retry (baseline) vs Cadence (agent) vs
+          the ground-truth ceiling (oracle), with compliant escalation and stopping rules.
         </p>
       </div>
 
@@ -86,22 +87,22 @@ export default function ComparePage() {
 
       {rows && (
         <div className="card overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-base">
             <thead>
               <tr className="border-b border-[var(--rule)] text-left">
-                <th className="p-3 eyebrow font-normal">Metric</th>
-                <th className="p-3 eyebrow font-normal text-right">Baseline</th>
-                <th className="p-3 eyebrow font-normal text-right">Cadence</th>
-                <th className="p-3 eyebrow font-normal text-right">Oracle</th>
+                <th className="p-4 eyebrow font-normal">Metric</th>
+                <th className="p-4 eyebrow font-normal text-right">Baseline</th>
+                <th className="p-4 eyebrow font-normal text-right">Cadence</th>
+                <th className="p-4 eyebrow font-normal text-right">Oracle</th>
               </tr>
             </thead>
             <tbody className="tabular">
               {rows.map((r) => (
                 <tr key={r.metric} className="border-b border-[var(--rule)] last:border-0">
-                  <td className="p-3">{r.label}</td>
-                  <td className="p-3 text-right">{formatValue(r, "baseline")}</td>
-                  <td className="p-3 text-right font-semibold">{formatValue(r, "agent")}</td>
-                  <td className="p-3 text-right text-[var(--ink-muted)]">{formatValue(r, "oracle")}</td>
+                  <td className="p-4">{r.label}</td>
+                  <td className="p-4 text-right">{formatValue(r, "baseline")}</td>
+                  <td className="p-4 text-right font-semibold">{formatValue(r, "agent")}</td>
+                  <td className="p-4 text-right text-[var(--ink-muted)]">{formatValue(r, "oracle")}</td>
                 </tr>
               ))}
             </tbody>
@@ -110,7 +111,7 @@ export default function ComparePage() {
       )}
 
       {capturedPct !== null && capturedPct !== undefined && presentmentReduction !== null && (
-        <p className="text-base">
+        <p className="text-lg">
           Cadence captured{" "}
           <span className="font-semibold text-[var(--stamp)]">{(capturedPct * 100).toFixed(0)}%</span> of the
           headroom the baseline left on the table, using{" "}

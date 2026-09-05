@@ -1,0 +1,58 @@
+[00]
+Cadence is an AI revenue-recovery system for failed recurring payments. It helps merchants recover money without treating every failure as a routine retry.
+[10]
+When a debit fails, the cause may be insufficient balance, a bank issue, a revoked mandate, a damaged instrument, or a risk decision. Each cause needs a different response.
+[20]
+Cadence processes every failure through six stages: ingest, classify, predict, policy, compliance, and execution. The important principle is that every decision remains explainable.
+[30]
+The system first normalises the payment event, identifies the root cause, estimates a funding window when timing matters, and proposes one bounded recovery action.
+[40]
+Before anything reaches a payment or messaging adapter, the compliance gate evaluates it. This is the control point that prevents an invalid presentment or contact.
+[50]
+The gate also protects the customer experience. It checks mandate status, amount limits, presentation caps, notices, quiet hours, opt-out status, and contact limits.
+[60]
+To measure the result fairly, Cadence compares its decisions with fixed-interval retry and a perfect-information oracle on the same synthetic payment book.
+[70]
+In this run, fixed-interval retry recovers 29.8 percent, Cadence recovers 36.5 percent, and the oracle reaches 79.3 percent.
+[80]
+The comparison measures more than recovery rate. It also counts recovered value, presentments, messages, terminal-case waste, and compliance violations.
+[90]
+Cadence records zero compliance violations because a blocked action is treated as a valid outcome and written to the audit trail.
+[100]
+Across the portfolio, the system separates money at risk, cycles currently being recovered, successful recoveries, and cases that require human attention.
+[110]
+The failure distribution explains why one universal retry schedule is inadequate. Balance shortfall, mandate defects, instrument defects, issuer failures, and risk blocks behave differently.
+[120]
+For a balance shortfall, Cadence learns the customer's likely funding pattern from successful debit history. The bars show the probability of clearing across the month.
+[130]
+The attempt markers show the difference between fixed timing and predicted timing. Cadence aims for the funding peak instead of spending attempts in a low-balance period.
+[140]
+This prediction does not use a hidden future balance. It uses information available to the recovery system and records the evidence that influenced the estimate.
+[150]
+The prediction is still only a recommendation. Policy applies attempt limits, cycle state, cause-specific actions, and timing constraints before proposing execution.
+[160]
+The baseline, Cadence, and oracle use the same corpus, seed, virtual clock, and bank simulator. That makes the improvement reproducible rather than a hand-picked success.
+[170]
+An operator can move from the portfolio result to individual billing cycles. Each row connects a customer, mandate, amount, recovery state, and presentation history.
+[180]
+Selecting one cycle brings the full recovery context together: the customer relationship, mandate state, amount due, and current position in the recovery process.
+[190]
+The system exposes the prediction basis and the presentation count so an operator can understand both the recommended timing and the remaining bounded capacity.
+[200]
+Every event appears in order: the original failure, its classification, the prediction, the policy decision, the gate evaluation, execution, and the outcome.
+[210]
+This is the difference between automation and an explainable recovery system. The operator can see what happened, why it happened, and what the system will do next.
+[220]
+The append-only ledger records decisions, blocked actions, messages, presentments, payment links, recoveries, and abandoned cycles.
+[230]
+A blocked action is not hidden as an error. Its failed checks and plain-English rationale remain available for an operator or auditor to inspect.
+[240]
+The ledger therefore becomes the source of truth for what Cadence proposed, what compliance allowed, what execution returned, and how the customer journey changed.
+[250]
+Cadence is designed to recover where recovery is justified and to stop where another retry would create risk, waste, or an inappropriate customer contact.
+[260]
+The same decision logic works with a virtual clock and simulator for evaluation, or with injected adapters for a controlled live-mode demonstration.
+[270]
+The language model does not choose payment actions. Decisions come from deterministic policy and prediction; language assistance is limited to rationale, approved messages, and read-only questions.
+[280]
+Cadence turns failed recurring debits into a measured recovery process: diagnose the cause, choose the right window, enforce the rules, and leave a complete record. Thank you.

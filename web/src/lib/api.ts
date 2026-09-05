@@ -1,7 +1,22 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+const DEFAULT_MERCHANT_ID = process.env.NEXT_PUBLIC_MERCHANT_ID ?? "demo_merchant";
+
+export function getMerchantId(): string {
+  if (typeof window === "undefined") return DEFAULT_MERCHANT_ID;
+  const url = new URL(window.location.href);
+  const fromQuery = url.searchParams.get("merchant_id")?.trim();
+  if (fromQuery) {
+    window.localStorage.setItem("cadence.merchant_id", fromQuery);
+    return fromQuery;
+  }
+  return window.localStorage.getItem("cadence.merchant_id")?.trim() || DEFAULT_MERCHANT_ID;
+}
 
 async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, { cache: "no-store" });
+  const res = await fetch(`${API_BASE}${path}`, {
+    cache: "no-store",
+    headers: { "x-merchant-id": getMerchantId() },
+  });
   if (!res.ok) {
     throw new Error(`${path} -> ${res.status}`);
   }
@@ -24,7 +39,7 @@ export type RunMetrics = {
   actions_blocked: number;
 };
 
-export type Run = { id: string; mode: string; corpus_id: string; seed: number; metrics: unknown };
+export type Run = { id: string; merchant_id: string; mode: string; corpus_id: string; seed: number; metrics: unknown };
 
 export type CompareRow = {
   metric: string;
@@ -102,7 +117,10 @@ export const api = {
     get<{ rows: unknown[] }>(`/cycles?run_id=${runId}${state ? `&state=${state}` : ""}`),
   cycleTimeline: (cycleId: string, runId: string) => get<CycleTimeline>(`/cycles/${cycleId}?run_id=${runId}`),
   cancelPending: async (cycleId: string, runId: string) => {
-    const res = await fetch(`${API_BASE}/cycles/${cycleId}/cancel-pending?run_id=${runId}`, { method: "POST" });
+    const res = await fetch(`${API_BASE}/cycles/${cycleId}/cancel-pending?run_id=${runId}`, {
+      method: "POST",
+      headers: { "x-merchant-id": getMerchantId() },
+    });
     if (!res.ok) throw new Error(`cancel-pending -> ${res.status}`);
     return res.json() as Promise<{ cancelled: number }>;
   },

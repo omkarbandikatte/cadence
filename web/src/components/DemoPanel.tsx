@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRuns } from "@/lib/RunContext";
+import { getMerchantId } from "@/lib/api";
 
 const CASE_IDS = [
   "A1_LATE_MONTH_TIMING",
@@ -65,7 +66,7 @@ export function DemoPanel() {
         `${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000"}/sim/tick`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", "x-merchant-id": getMerchantId() },
           body: JSON.stringify({ run_id: runId, days }),
         }
       );
@@ -84,7 +85,7 @@ export function DemoPanel() {
         `${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000"}/sim/inject`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", "x-merchant-id": getMerchantId() },
           body: JSON.stringify({ run_id: runId, case: caseId, mandate_id: mandateId || undefined }),
         }
       );
@@ -100,7 +101,7 @@ export function DemoPanel() {
     try {
       const r = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000"}/merchant/pause-automation`,
-        { method: "POST" }
+        { method: "POST", headers: { "x-merchant-id": getMerchantId() } }
       );
       setResult(await r.json());
     } finally {

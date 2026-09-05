@@ -57,17 +57,17 @@ export function MonthStrip({
                 />
               )}
               <div
-                className="w-full rounded-t-sm bg-[var(--rule)] transition-[height] duration-500 ease-out"
-                style={{ height: revealed ? barHeight : 2 }}
+                className="w-full rounded-t-sm bg-[var(--rule)] transition-[height] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
+                style={{ height: revealed ? barHeight : 2, transitionDelay: `${idx * 14}ms` }}
                 title={`day ${day}: ${(rate * 100).toFixed(0)}%`}
               />
               {isBaseline && (
                 <div
                   className={clsx(
-                    "absolute w-2.5 h-2.5 rounded-full border-2 border-[var(--ink-muted)] bg-transparent transition-opacity duration-300",
-                    revealed ? "opacity-100" : "opacity-0"
+                    "absolute w-2.5 h-2.5 rounded-full border-2 border-[var(--ink-muted)] bg-transparent transition-all duration-300",
+                    revealed ? "opacity-100 scale-100" : "opacity-0 scale-50"
                   )}
-                  style={{ bottom: barHeight + 4 }}
+                  style={{ bottom: barHeight + 4, transitionDelay: `${Math.min(idx * 14 + 80, 500)}ms` }}
                   aria-label={`baseline attempt on day ${day}`}
                 />
               )}

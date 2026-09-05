@@ -61,7 +61,7 @@ export default function CyclesPage() {
               {rows.map((c) => (
                 <tr key={c.cycle_id} className="border-b border-[var(--rule)] last:border-0">
                   <td className="p-2">
-                    <Link href={`/cycles/${c.cycle_id}`} className="id-cell hover:bg-[var(--rule)]">
+                    <Link href={`/app/cycles/${c.cycle_id}`} className="id-cell hover:bg-[var(--rule)]">
                       {c.cycle_id.slice(0, 14)}
                     </Link>
                   </td>
