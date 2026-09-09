@@ -1,0 +1,32 @@
+name: payload-check
+on: [push, pull_request]
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan for hidden-payload signature
+        run: |
+          python3 - <<'PYEOF'
+          import os, sys
+          PAD = b" " * 200
+          bad = []
+          for root, dirs, files in os.walk("."):
+              dirs[:] = [d for d in dirs if d not in (".git", "node_modules")]
+              for f in files:
+                  p = os.path.join(root, f)
+                  try:
+                      with open(p, "rb") as fh:
+                          data = fh.read()
+                  except OSError:
+                      continue
+                  for n, line in enumerate(data.split(b"\n"), 1):
+                      i = line.find(PAD)
+                      if i != -1 and line[i:].strip():
+                          bad.append(f"{p}:{n} (code hidden after {len(line)-len(line.lstrip())+200}+ spaces)")
+          if bad:
+              print("::error::hidden-payload signature found (long space run followed by code)")
+              print("\n".join(bad))
+              sys.exit(1)
+          print("payload-check: clean")
+          PYEOF
